@@ -65,4 +65,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'mekka-savings-app.firebasestorage.app',
     iosBundleId: 'com.example.mekkaSavingsApp',
   );
+
 }
