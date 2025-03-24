@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:mekka_savings_app/screens/profile_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -315,27 +316,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       Spacer(),
                       IconButton(
-                        tooltip: "Календарь взносов",
-                        icon: Icon(Icons.calendar_today_outlined, color: Colors.grey[700]),
+                        icon: Icon(Icons.person_outline, size: 32,),
                         onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(
-                            builder: (_) => CalendarScreen(userId: widget.userId),
-                          ));
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => ProfileScreen()),
+                          );
                         },
                       ),
-                      IconButton(
-                        tooltip: "Аналитика",
-                        icon: Icon(Icons.bar_chart_rounded, color: Colors.grey[700]),
-                        onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(
-                            builder: (_) => AnalyticsScreen(userId: widget.userId),
-                          ));
-                        },
-                      ),
-                      IconButton(
-                        onPressed: () async => await FirebaseAuth.instance.signOut(),
-                        icon: Icon(Icons.logout, color: Colors.grey[700]),
-                      )
                     ],
                   ),
                   Column(

@@ -1,25 +1,25 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../models/goal_model.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   final String userId;
-
-  AnalyticsScreen({required this.userId});
+  const AnalyticsScreen({required this.userId});
 
   @override
-  _AnalyticsScreenState createState() => _AnalyticsScreenState();
+  State<AnalyticsScreen> createState() => _AnalyticsScreenState();
 }
 
 class _AnalyticsScreenState extends State<AnalyticsScreen> {
   Map<String, double> dailyData = {};
   Map<String, double> monthlyData = {};
-  bool isLoading = true;
   List<QueryDocumentSnapshot> transactionDocs = [];
   GoalModel? goal;
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -33,26 +33,25 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         .doc('mekkaTrip')
         .get();
 
-    final goalData = goalDoc.data();
-    if (goalData == null) return;
+    if (!goalDoc.exists) return;
 
-    goal = GoalModel.fromMap(goalData);
+    goal = GoalModel.fromMap(goalDoc.data()!);
 
-    final snapshot = await FirebaseFirestore.instance
+    final txSnapshot = await FirebaseFirestore.instance
         .collection('goals')
         .doc('mekkaTrip')
         .collection('transactions')
         .where('userId', isEqualTo: widget.userId)
-        .orderBy('date', descending: false)
+        .orderBy('date')
         .get();
 
-    transactionDocs = snapshot.docs;
+    transactionDocs = txSnapshot.docs;
 
     final now = DateTime.now();
     Map<String, double> tempDaily = {};
     Map<String, double> tempMonthly = {};
 
-    for (var doc in snapshot.docs) {
+    for (var doc in txSnapshot.docs) {
       final data = doc.data();
       final date = (data['date'] as Timestamp).toDate();
       final amount = (data['amount'] ?? 0).toDouble();
@@ -73,176 +72,191 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     });
   }
 
-  List<BarChartGroupData> _buildBarData(Map<String, double> dataMap) {
-    final sortedKeys = dataMap.keys.toList()..sort();
-    final values = dataMap.values.toList();
-    final avg = values.isNotEmpty ? values.reduce((a, b) => a + b) / values.length : 0;
-
-    return List.generate(sortedKeys.length, (index) {
-      final key = sortedKeys[index];
-      final value = dataMap[key] ?? 0;
-
-      Color color;
-      if (value < avg * 0.5) {
-        color = Colors.lightBlue.shade100;
-      } else if (value < avg * 1.2) {
-        color = Colors.blueAccent;
-      } else {
-        color = Colors.green;
-      }
-
-      return BarChartGroupData(
-        x: index,
-        barRods: [
-          BarChartRodData(
-            toY: value,
-            width: 16,
-            color: color,
-            borderRadius: BorderRadius.circular(4),
-          ),
+  Widget _buildChartCard(String title, Widget child) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFFFFF5E1), Color(0xFFE8F8F5)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.brown.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 6),
+          )
         ],
-        showingTooltipIndicators: [0],
-      );
-    });
-  }
-
-  Widget _buildBarChart(Map<String, double> dataMap, String title) {
-    if (dataMap.isEmpty) return Text("Нет данных");
-
-    final sortedKeys = dataMap.keys.toList()..sort();
-    final spots = _buildBarData(dataMap);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        SizedBox(
-          height: 200,
-          child: BarChart(
-            BarChartData(
-              barGroups: spots,
-              gridData: FlGridData(show: true),
-              borderData: FlBorderData(show: false),
-              titlesData: FlTitlesData(
-                leftTitles: AxisTitles(
-                  sideTitles: SideTitles(showTitles: true, interval: 10000),
-                ),
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    getTitlesWidget: (value, _) {
-                      final index = value.toInt();
-                      if (index < sortedKeys.length) {
-                        return Text(sortedKeys[index], style: TextStyle(fontSize: 10));
-                      }
-                      return Text('');
-                    },
-                  ),
-                ),
-              ),
-              extraLinesData: ExtraLinesData(
-                horizontalLines: [
-                  HorizontalLine(
-                    y: dataMap.values.isEmpty ? 0 : dataMap.values.reduce((a, b) => a + b) / dataMap.length,
-                    color: Colors.redAccent,
-                    strokeWidth: 2,
-                    dashArray: [5, 5],
-                    label: HorizontalLineLabel(
-                      show: true,
-                      labelResolver: (_) => "Среднее",
-                      style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: GoogleFonts.cairo(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.brown[800],
               ),
             ),
-          ),
+            SizedBox(height: 16),
+            child,
+          ],
         ),
-        SizedBox(height: 24),
-      ],
+      ),
     );
   }
 
-  List<FlSpot> _buildDeviationGraph(List<QueryDocumentSnapshot> docs, GoalModel goal) {
-    List<FlSpot> points = [];
-
-    final startDate = docs.first['date'].toDate();
-    final endDate = goal.deadline;
-    final totalDays = endDate.difference(startDate).inDays;
-
-    double saved = 0;
-
-    for (int i = 0; i < docs.length; i++) {
-      final data = docs[i];
-      final date = (data['date'] as Timestamp).toDate();
-      final amount = (data['amount'] ?? 0).toDouble();
-      saved += amount;
-
-      final daysPassed = date.difference(startDate).inDays;
-      final expected = goal.targetAmount * (daysPassed / totalDays);
-      final deviation = saved - expected;
-
-      points.add(FlSpot(daysPassed.toDouble(), deviation));
+  Widget _buildBarChart(Map<String, double> dataMap) {
+    final keys = dataMap.keys.toList()..sort();
+    final values = dataMap.values.toList();
+    if (values.isEmpty) {
+      return Center(child: Text("Нет данных", style: GoogleFonts.nunito()));
     }
 
-    return points;
-  }
+    final avg = values.reduce((a, b) => a + b) / values.length;
 
-  Widget buildDeviationChart(List<FlSpot> spots) {
-    if (spots.isEmpty) return Text("Недостаточно данных");
+    return SizedBox(
+      height: 220,
+      child: BarChart(
+        BarChartData(
+          barGroups: List.generate(keys.length, (i) {
+            final value = dataMap[keys[i]]!;
+            final color = value < avg * 0.5
+                ? Colors.orange.shade200
+                : value < avg * 1.2
+                ? Colors.teal
+                : Colors.green;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text("📉 Отклонение от плана", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        SizedBox(
-          height: 200,
-          child: LineChart(
-            LineChartData(
-              lineBarsData: [
-                LineChartBarData(
-                  spots: spots,
-                  isCurved: true,
-                  color: Colors.blueAccent,
-                  dotData: FlDotData(show: false),
+            return BarChartGroupData(
+              x: i,
+              barRods: [
+                BarChartRodData(
+                  toY: value,
+                  width: 14,
+                  color: color,
+                  borderRadius: BorderRadius.circular(6),
+                  gradient: LinearGradient(
+                    colors: [color.withOpacity(0.8), color],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
                 ),
               ],
-              gridData: FlGridData(show: true),
-              titlesData: FlTitlesData(show: false),
-              borderData: FlBorderData(show: false),
-              lineTouchData: LineTouchData(
-                touchTooltipData: LineTouchTooltipData(
-                  getTooltipItems: (spots) => spots.map((e) {
-                    return LineTooltipItem(
-                      "${e.y >= 0 ? '🔼 +' : '🔽 '}${e.y.toStringAsFixed(0)} тг",
-                      TextStyle(color: Colors.white),
-                    );
-                  }).toList(),
-                ),
+              showingTooltipIndicators: [0],
+            );
+          }),
+          titlesData: FlTitlesData(
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(showTitles: true, reservedSize: 40),
+            ),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, _) {
+                  final i = value.toInt();
+                  return Text(i < keys.length ? keys[i] : '', style: TextStyle(fontSize: 10));
+                },
               ),
             ),
           ),
+          borderData: FlBorderData(show: false),
+          gridData: FlGridData(show: false),
         ),
-      ],
+      ),
+    );
+  }
+
+  Widget _buildDeviationChart() {
+    if (transactionDocs.isEmpty || goal == null) {
+      return Center(child: Text("Нет данных", style: GoogleFonts.nunito()));
+    }
+
+    List<FlSpot> spots = [];
+    double saved = 0;
+    final startDate = transactionDocs.first['date'].toDate();
+    final totalDays = goal!.deadline.difference(startDate).inDays;
+
+    for (var doc in transactionDocs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final date = (data['date'] as Timestamp).toDate();
+      final amount = (data['amount'] ?? 0).toDouble();
+      saved += amount;
+      final daysPassed = date.difference(startDate).inDays;
+      final expected = goal!.targetAmount * (daysPassed / totalDays);
+      final deviation = saved - expected;
+      spots.add(FlSpot(daysPassed.toDouble(), deviation));
+    }
+
+    return SizedBox(
+      height: 220,
+      child: LineChart(
+        LineChartData(
+          lineBarsData: [
+            LineChartBarData(
+              spots: spots,
+              isCurved: true,
+              color: Colors.teal[700],
+              barWidth: 3,
+              belowBarData: BarAreaData(
+                show: true,
+                color: Colors.teal!.withOpacity(0.1),
+              ),
+              dotData: FlDotData(show: false),
+            ),
+          ],
+          borderData: FlBorderData(show: false),
+          gridData: FlGridData(show: false),
+          titlesData: FlTitlesData(show: false),
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("📊 Аналитика")),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _buildBarChart(dailyData, "📅 Взносы за последние 7 дней"),
-            _buildBarChart(monthlyData, "🗓 Взносы по месяцам"),
-            if (goal != null && transactionDocs.isNotEmpty)
-              buildDeviationChart(_buildDeviationGraph(transactionDocs, goal!)),
-          ],
-        ),
+      body: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFFDEBD0), Color(0xFFE8F8F5)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+          isLoading
+              ? Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+            padding: EdgeInsets.all(16),
+            child: SafeArea(
+              child: Column(
+                children: [
+                  _buildChartCard("📅 Взносы за 7 дней", _buildBarChart(dailyData)),
+                  _buildChartCard("🗓 Взносы по месяцам", _buildBarChart(monthlyData)),
+                  _buildChartCard("🧭 Отклонение от плана", _buildDeviationChart()),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            top: 50,
+            right: 10,
+            child: CircleAvatar(
+              backgroundColor: Colors.white,
+              radius: 24,
+              child: IconButton(onPressed: (){
+                Navigator.pop(context);
+              }, icon: Icon(Icons.close, size: 24,)),
+            ),
+          )
+        ],
       ),
     );
   }
