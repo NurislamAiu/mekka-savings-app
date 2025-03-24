@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "786846023782",
+    "project_id": "mekka-savings-app",
+    "storage_bucket": "mekka-savings-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:786846023782:android:4c641fd59d89b4abda6da7",
+        "android_client_info": {
+          "package_name": "com.example.mekka_savings_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBwrLZzys8xGYez9DIA4mSyAwJEsvlC834"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
