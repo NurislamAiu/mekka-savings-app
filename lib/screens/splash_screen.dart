@@ -1,11 +1,12 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:async';
 
-class SplashScreen extends StatefulWidget {
-  final Widget nextScreen;
-  const SplashScreen({required this.nextScreen});
+import 'auth_screen.dart';
+import 'home_screen.dart';
 
+class SplashScreen extends StatefulWidget {
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
@@ -23,14 +24,20 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       duration: Duration(seconds: 2),
     )..repeat();
 
-    // Через 2.5 секунды — переход
-    Future.delayed(Duration(milliseconds: 2500), () {
+    // Проверка авторизации через 2.5 сек
+    Future.delayed(Duration(milliseconds: 2500), () async {
       setState(() => _visible = false);
-      Future.delayed(Duration(milliseconds: 600), () {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => widget.nextScreen),
-        );
-      });
+
+      await Future.delayed(Duration(milliseconds: 600)); // fade-out
+      final user = FirebaseAuth.instance.currentUser;
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => user != null
+              ? HomeScreen(userId: user.uid)
+              : AuthScreen(),
+        ),
+      );
     });
   }
 

@@ -1,10 +1,10 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:mekka_savings_app/screens/auth_screen.dart';
-import 'screens/home_screen.dart';
+
+import 'package:mekka_savings_app/screens/splash_screen.dart';
+
 import 'providers/goal_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -19,39 +19,19 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => GoalProvider()),
-      ],
+      providers: [ChangeNotifierProvider(create: (_) => GoalProvider())],
       child: MaterialApp(
         title: 'Mekka Savings App',
         locale: Locale('ru'),
+        debugShowCheckedModeBanner: false,
         supportedLocales: [Locale('ru'), Locale('en')],
         localizationsDelegates: [
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        home: AuthGate(),
+        home: SplashScreen(),
       ),
-    );
-  }
-}
-
-
-class AuthGate extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting)
-          return Center(child: CircularProgressIndicator());
-
-        if (snapshot.hasData)
-          return HomeScreen(userId: snapshot.data!.uid); // Пользователь вошёл
-        else
-          return AuthScreen(); // Не вошёл
-      },
     );
   }
 }

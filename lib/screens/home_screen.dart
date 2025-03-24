@@ -5,11 +5,13 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
 
+import '../data/daily_ayahs.dart';
 import '../providers/goal_provider.dart';
 import '../utils/goal_helper.dart';
-import 'calendar_screen.dart';
 import 'analytics_screen.dart';
+import 'calendar_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String userId;
@@ -23,6 +25,8 @@ class _HomeScreenState extends State<HomeScreen> {
   DateTime? _forecastDate;
   late ConfettiController _confettiController;
   bool _goalReachedShown = false;
+  final ayah = dailyAyahs[DateTime.now().day % dailyAyahs.length];
+  final todayAyah = todayAyahsList[DateTime.now().day % todayAyahsList.length];
 
   @override
   void initState() {
@@ -114,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: Icon(Icons.check_circle_outline, color: Colors.white),
                   label: Text(
                     "Добавить взнос",
-                    style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600),
+                    style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
                   ),
                   style: ElevatedButton.styleFrom(
                     padding: EdgeInsets.symmetric(horizontal: 20),
@@ -141,7 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // 📿 Аят
               Text(
-                "“Аллах приумножает [награду] тому, кто расходует ради Него...”",
+                todayAyah,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.cairo(fontSize: 13, color: Colors.grey[600]),
               ),
@@ -165,13 +169,102 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _showGoalReachedDialog(BuildContext context) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'GoalReached',
+      transitionDuration: Duration(milliseconds: 400),
+      pageBuilder: (context, _, __) {
+        return Center(
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.85,
+              padding: EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 20)],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SvgPicture.asset('assets/kaaba.svg', height: 60),
+                  SizedBox(height: 20),
+                  Text(
+                    "🎉 Поздравляем!",
+                    style: GoogleFonts.cairo(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.teal[800],
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    "Ты достиг своей цели! 🕋\nАллах примет твои старания и намерения.",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.nunito(fontSize: 16, color: Colors.grey[800]),
+                  ),
+                  SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    icon: Icon(Icons.favorite, color: Colors.white),
+                    label: Text("Альхамдулиллях", style: TextStyle(color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 4,
+                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, _, child) {
+        return ScaleTransition(
+          scale: CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
+          child: FadeTransition(opacity: animation, child: child),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<GoalProvider>(context);
     final goal = provider.goal;
 
     if (goal == null) {
-      return Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        backgroundColor: Color(0xFFFDF6EE),
+        body: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              SizedBox(height: 60),
+              _shimmerBox(width: 180, height: 24),
+              SizedBox(height: 12),
+              _shimmerBox(width: double.infinity, height: 16),
+              SizedBox(height: 30),
+              _shimmerCard(height: 100),
+              SizedBox(height: 16),
+              _shimmerBox(width: 200, height: 18),
+              SizedBox(height: 10),
+              _shimmerRow(),
+              _shimmerRow(),
+              _shimmerRow(),
+              Spacer(),
+              _shimmerButton(),
+            ],
+          ),
+        ),
+      );
     }
 
     final plan = GoalHelper.calculatePlan(goal);
@@ -182,14 +275,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _confettiController.play();
       Future.delayed(Duration(milliseconds: 500), () {
         if (mounted) {
-          showDialog(
-            context: context,
-            builder: (_) => AlertDialog(
-              title: Text("🎉 Поздравляем!"),
-              content: Text("Ты достиг своей цели! 🕋"),
-              actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text("Ура!"))],
-            ),
-          );
+          _showGoalReachedDialog(context);
         }
       });
     }
@@ -229,14 +315,49 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       Spacer(),
                       IconButton(
+                        tooltip: "Календарь взносов",
+                        icon: Icon(Icons.calendar_today_outlined, color: Colors.grey[700]),
+                        onPressed: () {
+                          Navigator.push(context, MaterialPageRoute(
+                            builder: (_) => CalendarScreen(userId: widget.userId),
+                          ));
+                        },
+                      ),
+                      IconButton(
+                        tooltip: "Аналитика",
+                        icon: Icon(Icons.bar_chart_rounded, color: Colors.grey[700]),
+                        onPressed: () {
+                          Navigator.push(context, MaterialPageRoute(
+                            builder: (_) => AnalyticsScreen(userId: widget.userId),
+                          ));
+                        },
+                      ),
+                      IconButton(
                         onPressed: () async => await FirebaseAuth.instance.signOut(),
                         icon: Icon(Icons.logout, color: Colors.grey[700]),
                       )
                     ],
                   ),
-                  Text(
-                    "“И соверши паломничество ради Аллаха…”\n(Сура 2:196)",
-                    style: GoogleFonts.nunito(fontSize: 14, color: Colors.brown[700]),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        ayah["arabic"] ?? '',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, fontFamily: 'Amiri'), // Или NotoNaskhArabic
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        '"${ayah["ru"]}"',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.nunito(fontSize: 14, color: Colors.grey[700]),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        ayah["source"] ?? '',
+                        style: GoogleFonts.cairo(fontSize: 12, color: Colors.grey[500]),
+                      ),
+                    ],
                   ),
 
                   SizedBox(height: 24),
@@ -361,6 +482,63 @@ class _HomeScreenState extends State<HomeScreen> {
         focusedBorder: OutlineInputBorder(
           borderSide: BorderSide(color: Colors.teal, width: 2),
           borderRadius: BorderRadius.circular(14),
+        ),
+      ),
+    );
+  }
+  Widget _shimmerBox({double width = double.infinity, double height = 16}) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+    );
+  }
+
+  Widget _shimmerCard({double height = 120}) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        width: double.infinity,
+        height: height,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
+    );
+  }
+
+  Widget _shimmerRow() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _shimmerBox(width: 140, height: 14),
+          _shimmerBox(width: 80, height: 14),
+        ],
+      ),
+    );
+  }
+
+  Widget _shimmerButton() {
+    return Shimmer.fromColors(
+      baseColor: Colors.teal.shade200,
+      highlightColor: Colors.teal.shade100,
+      child: Container(
+        width: double.infinity,
+        height: 50,
+        decoration: BoxDecoration(
+          color: Colors.teal,
+          borderRadius: BorderRadius.circular(12),
         ),
       ),
     );
