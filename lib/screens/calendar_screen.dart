@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 
 class CalendarScreen extends StatefulWidget {
   final String userId;
-
   CalendarScreen({required this.userId});
 
   @override
@@ -25,11 +24,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   void _fetchTransactions() async {
     final snapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(widget.userId)
         .collection('goals')
         .doc('mekkaTrip')
         .collection('transactions')
+        .where('userId', isEqualTo: widget.userId)
         .orderBy('date')
         .get();
 
@@ -40,12 +38,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
       final date = (tx['date'] as Timestamp).toDate();
       final day = DateTime(date.year, date.month, date.day);
 
-      if (data[day] == null) data[day] = [];
+      if (!data.containsKey(day)) data[day] = [];
 
       data[day]!.add({
         'amount': tx['amount'],
         'note': tx['note'],
-        'by': tx['by'] ?? 'Не указано',
+        'by': tx['by'] ?? 'Неизвестно',
         'date': date,
       });
     }
@@ -62,12 +60,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Календарь взносов")),
+      appBar: AppBar(title: Text("📅 Календарь взносов")),
       body: Column(
         children: [
           TableCalendar(
-            firstDay: DateTime(2024, 1, 1),
-            lastDay: DateTime(2025, 12, 31),
+            firstDay: DateTime.utc(2024, 1, 1),
+            lastDay: DateTime.utc(2026, 12, 31),
             focusedDay: _focusedDay,
             selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
             onDaySelected: (selectedDay, focusedDay) {
@@ -78,16 +76,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
             },
             eventLoader: _getEventsForDay,
             calendarStyle: CalendarStyle(
+              markerDecoration: BoxDecoration(
+                color: Colors.blueAccent,
+                shape: BoxShape.circle,
+              ),
               todayDecoration: BoxDecoration(
                 color: Colors.orange,
                 shape: BoxShape.circle,
               ),
               selectedDecoration: BoxDecoration(
                 color: Colors.green,
-                shape: BoxShape.circle,
-              ),
-              markerDecoration: BoxDecoration(
-                color: Colors.blueAccent,
                 shape: BoxShape.circle,
               ),
             ),

@@ -1,31 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/goal_model.dart';
 
 class GoalProvider extends ChangeNotifier {
   GoalModel? goal;
-  final String userId = "testUser";
 
-  final CollectionReference goalRef = FirebaseFirestore.instance
-      .collection('users')
-      .doc("testUser")
-      .collection('goals');
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  final DocumentReference goalDoc = FirebaseFirestore.instance
+      .collection('goals')
+      .doc('mekkaTrip');
 
   Future<void> loadGoal() async {
-    final doc = await goalRef.doc('mekkaTrip').get();
-    if (!doc.exists) {
+    final doc = await goalDoc.get();
+    if (!doc.exists || doc.data() == null) {
       await createDefaultGoal();
+      return loadGoal();
     }
 
     final data = doc.data() as Map<String, dynamic>;
     goal = GoalModel.fromMap(data);
 
-
     notifyListeners();
   }
 
   Future<void> createDefaultGoal() async {
-    await goalRef.doc('mekkaTrip').set({
+    await goalDoc.set({
       'title': 'Путёвка в Мекку для мамы',
       'targetAmount': 1500000,
       'savedAmount': 0,
@@ -38,28 +39,25 @@ class GoalProvider extends ChangeNotifier {
       : goal!.savedAmount / goal!.targetAmount;
 
   Future<void> addTransaction(double amount, String note) async {
-    final goalDoc = goalRef.doc('mekkaTrip');
+    final user = _auth.currentUser;
 
-    // 1. Добавляем транзакцию в подколлекцию
     await goalDoc.collection('transactions').add({
       'amount': amount,
       'note': note,
-      'by': "Я", // позже заменим на имя пользователя из FirebaseAuth
+      'by': user?.email ?? 'Неизвестный',
+      'userId': user?.uid ?? '',
       'date': Timestamp.now(),
     });
 
-    // 2. Обновляем savedAmount
     await goalDoc.update({
       'savedAmount': FieldValue.increment(amount),
     });
 
-    // 3. Обновляем локальную модель и уведомляем слушателей
-    await loadGoal(); // перезагружаем данные
+    await loadGoal();
   }
 
-
   Future<DateTime?> calculateForecastDate() async {
-    final txSnapshot = await goalRef.doc('mekkaTrip')
+    final txSnapshot = await goalDoc
         .collection('transactions')
         .orderBy('date')
         .get();
@@ -86,4 +84,3 @@ class GoalProvider extends ChangeNotifier {
     return DateTime.now().add(Duration(days: estimatedDaysToFinish));
   }
 }
-

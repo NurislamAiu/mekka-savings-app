@@ -25,4 +25,28 @@ class GoalHelper {
       'perMonth': perMonth,
     };
   }
+
+  static String getProgressStatus(GoalModel goal) {
+    final now = DateTime.now();
+    final totalDuration = goal.deadline.difference(goal.deadline.subtract(Duration(days: 1))).inDays;
+    final daysPassed = now.difference(DateTime(now.year, now.month, now.day)).inDays;
+    final daysTotal = goal.deadline.difference(now).inDays + daysPassed;
+
+    if (daysTotal <= 0) return "🛑 Срок истёк";
+
+    final expectedProgress = daysPassed / daysTotal;
+    final actualProgress = goal.savedAmount / goal.targetAmount;
+
+    final delta = actualProgress - expectedProgress;
+
+    if (delta >= 0.05) {
+      return "✅ Ты опережаешь план";
+    } else if (delta >= -0.05) {
+      return "⚠️ Идёшь примерно по плану";
+    } else {
+      return "🛑 Отстаёшь от плана";
+    }
+  }
+
+
 }
