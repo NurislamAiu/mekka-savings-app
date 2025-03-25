@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mekka_savings_app/screens/friend_requests_screen.dart';
 
 class FriendsScreen extends StatefulWidget {
   const FriendsScreen({super.key});
@@ -36,11 +37,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
       status = '';
     });
 
-    final snapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .where('email', isEqualTo: email)
-        .limit(1)
-        .get();
+    final snapshot =
+        await FirebaseFirestore.instance
+            .collection('users')
+            .where('email', isEqualTo: email)
+            .limit(1)
+            .get();
 
     if (snapshot.docs.isEmpty) {
       setState(() {
@@ -53,7 +55,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
     final data = snapshot.docs.first.data();
     final uid = snapshot.docs.first.id;
-    final myDoc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
+    final myDoc =
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user!.uid)
+            .get();
 
     final myFriends = List<String>.from(myDoc.data()?['friends'] ?? []);
     final myRequests = List<String>.from(myDoc.data()?['friendRequests'] ?? []);
@@ -80,7 +86,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final targetId = foundUser!['uid'];
 
     await FirebaseFirestore.instance.collection('users').doc(user!.uid).set({
-      'friendRequests': FieldValue.arrayUnion([targetId])
+      'friendRequests': FieldValue.arrayUnion([targetId]),
     }, SetOptions(merge: true));
 
     setState(() {
@@ -100,20 +106,34 @@ class _FriendsScreenState extends State<FriendsScreen> {
       case 'self':
         return Text("Это ты 😊", style: GoogleFonts.nunito(color: Colors.grey));
       case 'not_found':
-        return Text("Пользователь не найден ❌", style: GoogleFonts.nunito(color: Colors.red));
+        return Text(
+          "Пользователь не найден ❌",
+          style: GoogleFonts.nunito(color: Colors.red),
+        );
       case 'already_friends':
-        return Text("Уже в друзьях 🫂", style: GoogleFonts.nunito(color: Colors.green));
+        return Text(
+          "Уже в друзьях 🫂",
+          style: GoogleFonts.nunito(color: Colors.green),
+        );
       case 'request_sent':
-        return Text("Запрос уже отправлен 🕊", style: GoogleFonts.nunito(color: Colors.orange));
+        return Text(
+          "Запрос уже отправлен 🕊",
+          style: GoogleFonts.nunito(color: Colors.orange),
+        );
       case 'can_add':
         return ElevatedButton.icon(
           onPressed: sendFriendRequest,
           icon: Icon(Icons.person_add, color: Colors.white),
-          label: Text("Добавить в друзья", style: GoogleFonts.nunito(color: Colors.white)),
+          label: Text(
+            "Добавить в друзья",
+            style: GoogleFonts.nunito(color: Colors.white),
+          ),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.teal,
             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
           ),
         );
       default:
@@ -146,13 +166,20 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   SizedBox(height: 10),
                   Text(
                     "Пригласи друзей к Умре 🕋",
-                    style: GoogleFonts.cairo(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.brown[800]),
+                    style: GoogleFonts.cairo(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.brown[800],
+                    ),
                   ),
                   SizedBox(height: 10),
                   Text(
                     "«Кто указал на благое — тот получит награду подобную награде совершающего это благое» (Хадис)",
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.nunito(fontSize: 13, color: Colors.grey[700]),
+                    style: GoogleFonts.nunito(
+                      fontSize: 13,
+                      color: Colors.grey[700],
+                    ),
                   ),
                   SizedBox(height: 20),
 
@@ -164,7 +191,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
                       prefixIcon: Icon(Icons.search, color: Colors.teal),
                       filled: true,
                       fillColor: Colors.white,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
                     onSubmitted: (_) => searchUser(),
                   ),
@@ -174,10 +203,15 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: searchUser,
-                      child: Text("Найти друга", style: GoogleFonts.nunito(fontSize: 15)),
+                      child: Text(
+                        "Найти друга",
+                        style: GoogleFonts.nunito(fontSize: 15),
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.teal,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                         padding: EdgeInsets.symmetric(vertical: 14),
                       ),
                     ),
@@ -195,15 +229,26 @@ class _FriendsScreenState extends State<FriendsScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
-                        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
+                        boxShadow: [
+                          BoxShadow(color: Colors.black12, blurRadius: 10),
+                        ],
                         border: Border.all(color: Colors.teal.shade100),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("@${foundUser!['nickname']}", style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.bold)),
+                          Text(
+                            "@${foundUser!['nickname']}",
+                            style: GoogleFonts.nunito(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           SizedBox(height: 4),
-                          Text(foundUser!['email'], style: GoogleFonts.nunito(color: Colors.grey[700])),
+                          Text(
+                            foundUser!['email'],
+                            style: GoogleFonts.nunito(color: Colors.grey[700]),
+                          ),
                           SizedBox(height: 14),
                           _statusWidget(),
                         ],
@@ -217,17 +262,31 @@ class _FriendsScreenState extends State<FriendsScreen> {
           // Кнопка возврата назад
           Positioned(
             top: 50,
-            right: 10,
+            right: 20,
             child: CircleAvatar(
               radius: 24,
               backgroundColor: Colors.white,
               child: IconButton(
-                icon: Icon(Icons.close, color: Colors.black, size: 24,),
+                icon: Icon(Icons.close, color: Colors.black, size: 24),
                 onPressed: () => Navigator.pop(context),
               ),
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.white,
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => FriendRequestsScreen()),
+          );
+        },
+        child: Icon(
+          Icons.notifications_active_outlined,
+          size: 24,
+          color: Colors.teal,
+        ),
       ),
     );
   }

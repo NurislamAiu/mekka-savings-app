@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shimmer/shimmer.dart';
 
 class FriendRequestsScreen extends StatefulWidget {
   const FriendRequestsScreen({super.key});
@@ -22,6 +24,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
   }
 
   Future<void> loadRequests() async {
+    setState(() => isLoading = true);
     final doc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
     final ids = List<String>.from(doc.data()?['friendRequests'] ?? []);
 
@@ -71,46 +74,139 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFFDF6EE),
-      appBar: AppBar(
-        title: Text("📩 Заявки в друзья", style: GoogleFonts.cairo()),
-        backgroundColor: Colors.teal,
-      ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : requests.isEmpty
-          ? Center(child: Text("Нет новых заявок", style: GoogleFonts.nunito()))
-          : ListView.builder(
-        padding: EdgeInsets.all(20),
-        itemCount: requests.length,
-        itemBuilder: (context, index) {
-          final r = requests[index];
-          return Card(
-            margin: EdgeInsets.only(bottom: 12),
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundColor: Colors.teal.shade100,
-                child: Icon(Icons.person, color: Colors.teal),
+      body: Stack(
+        children: [
+          // 🌅 Фон
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFFDEBD0), Color(0xFFE8F8F5)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
-              title: Text("@${r['nickname']}", style: GoogleFonts.nunito(fontWeight: FontWeight.bold)),
-              subtitle: Text(r['email']),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
+            ),
+          ),
+
+          SafeArea(
+            child: RefreshIndicator(
+              onRefresh: loadRequests,
+              child: ListView(
+                padding: EdgeInsets.all(20),
                 children: [
-                  IconButton(
-                    icon: Icon(Icons.check_circle, color: Colors.green),
-                    onPressed: () => accept(r['uid']),
+                  // 📖 Хадис дня
+                  Column(
+                    children: [
+                      SvgPicture.asset('assets/kaaba.svg', height: 40),
+                      SizedBox(height: 8),
+                      Text(
+                        '“Верующий для верующего подобен зданию, части которого укрепляют друг друга”',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.brown[800]),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        '(Хадис от аль-Бухари и Муслима)',
+                        style: GoogleFonts.nunito(fontSize: 12, color: Colors.grey[600]),
+                      ),
+                      SizedBox(height: 20),
+                    ],
                   ),
-                  IconButton(
-                    icon: Icon(Icons.cancel, color: Colors.red),
-                    onPressed: () => decline(r['uid']),
+
+                  isLoading
+                      ? _buildShimmer()
+                      : requests.isEmpty
+                      ? Column(
+                    children: [
+                      SizedBox(height: 60),
+                      Text(
+                        "📭 Пока нет новых заявок",
+                        style: GoogleFonts.nunito(fontSize: 16, color: Colors.grey[700]),
+                      ),
+                    ],
+                  )
+                      : Column(
+                    children: requests.map(_requestCard).toList(),
                   ),
                 ],
               ),
             ),
-          );
-        },
+          ),
+
+          Positioned(
+            top: 50,
+            right: 20,
+            child: CircleAvatar(
+              backgroundColor: Colors.white,
+              radius: 22,
+              child: IconButton(
+                icon: Icon(Icons.close),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _requestCard(Map<String, dynamic> req) {
+    return Container(
+      padding: EdgeInsets.all(16),
+      margin: EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
+        ],
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: Colors.teal.shade100,
+            child: Icon(Icons.person, color: Colors.teal),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("@${req['nickname']}",
+                    style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text(req['email'], style: GoogleFonts.nunito(color: Colors.grey[700])),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.check_circle, color: Colors.green, size: 32),
+            onPressed: () => accept(req['uid']),
+          ),
+          IconButton(
+            icon: Icon(Icons.cancel, color: Colors.redAccent, size: 32),
+            onPressed: () => decline(req['uid']),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ✨ Шиммер-карточки во время загрузки
+  Widget _buildShimmer() {
+    return Column(
+      children: List.generate(3, (_) {
+        return Shimmer.fromColors(
+          baseColor: Colors.grey[300]!,
+          highlightColor: Colors.grey[100]!,
+          child: Container(
+            height: 80,
+            margin: EdgeInsets.only(bottom: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+        );
+      }),
     );
   }
 }

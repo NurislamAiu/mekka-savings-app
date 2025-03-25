@@ -184,7 +184,7 @@ class _MyFriendsScreenState extends State<MyFriendsScreen> {
           ),
           Positioned(
             top: 50,
-            right: 10,
+            right: 20,
             child: CircleAvatar(
               backgroundColor: Colors.white,
               radius: 24,
