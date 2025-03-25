@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class FriendsScreen extends StatefulWidget {
@@ -12,121 +13,221 @@ class FriendsScreen extends StatefulWidget {
 
 class _FriendsScreenState extends State<FriendsScreen> {
   final user = FirebaseAuth.instance.currentUser;
-  final emailController = TextEditingController();
-  String statusMessage = '';
-  List<Map<String, dynamic>> friends = [];
+  final controller = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    _loadFriends();
-  }
+  Map<String, dynamic>? foundUser;
+  String status = '';
+  bool isSearching = false;
 
-  Future<void> _loadFriends() async {
-    final doc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
-    final friendUIDs = List<String>.from(doc.data()?['friends'] ?? []);
+  Future<void> searchUser() async {
+    final email = controller.text.trim().toLowerCase();
 
-    List<Map<String, dynamic>> loaded = [];
-    for (String uid in friendUIDs) {
-      final friendDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      if (friendDoc.exists) {
-        loaded.add({
-          'uid': uid,
-          'nickname': friendDoc['nickname'] ?? '',
-          'email': friendDoc['email'] ?? '',
-        });
-      }
-    }
-
-    setState(() {
-      friends = loaded;
-    });
-  }
-
-  Future<void> _addFriend() async {
-    final email = emailController.text.trim();
-
-    if (email.isEmpty || email == user?.email) {
-      setState(() => statusMessage = "❗ Введи email другого пользователя");
+    if (email == user?.email) {
+      setState(() {
+        foundUser = null;
+        status = 'self';
+      });
       return;
     }
 
-    final query = await FirebaseFirestore.instance
+    setState(() {
+      isSearching = true;
+      foundUser = null;
+      status = '';
+    });
+
+    final snapshot = await FirebaseFirestore.instance
         .collection('users')
         .where('email', isEqualTo: email)
+        .limit(1)
         .get();
 
-    if (query.docs.isEmpty) {
-      setState(() => statusMessage = "😕 Пользователь не найден");
+    if (snapshot.docs.isEmpty) {
+      setState(() {
+        foundUser = null;
+        status = 'not_found';
+        isSearching = false;
+      });
       return;
     }
 
-    final friendId = query.docs.first.id;
+    final data = snapshot.docs.first.data();
+    final uid = snapshot.docs.first.id;
+    final myDoc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
 
-    await FirebaseFirestore.instance.collection('users').doc(user!.uid).update({
-      'friends': FieldValue.arrayUnion([friendId])
-    });
+    final myFriends = List<String>.from(myDoc.data()?['friends'] ?? []);
+    final myRequests = List<String>.from(myDoc.data()?['friendRequests'] ?? []);
 
     setState(() {
-      emailController.clear();
-      statusMessage = "✅ Друг добавлен!";
+      foundUser = {
+        'uid': uid,
+        'nickname': data['nickname'],
+        'email': data['email'],
+      };
+      isSearching = false;
+
+      if (myFriends.contains(uid)) {
+        status = 'already_friends';
+      } else if (myRequests.contains(uid)) {
+        status = 'request_sent';
+      } else {
+        status = 'can_add';
+      }
+    });
+  }
+
+  Future<void> sendFriendRequest() async {
+    final targetId = foundUser!['uid'];
+
+    await FirebaseFirestore.instance.collection('users').doc(user!.uid).set({
+      'friendRequests': FieldValue.arrayUnion([targetId])
+    }, SetOptions(merge: true));
+
+    setState(() {
+      status = 'request_sent';
     });
 
-    _loadFriends();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Запрос отправлен 🌙'),
+        backgroundColor: Colors.teal,
+      ),
+    );
+  }
+
+  Widget _statusWidget() {
+    switch (status) {
+      case 'self':
+        return Text("Это ты 😊", style: GoogleFonts.nunito(color: Colors.grey));
+      case 'not_found':
+        return Text("Пользователь не найден ❌", style: GoogleFonts.nunito(color: Colors.red));
+      case 'already_friends':
+        return Text("Уже в друзьях 🫂", style: GoogleFonts.nunito(color: Colors.green));
+      case 'request_sent':
+        return Text("Запрос уже отправлен 🕊", style: GoogleFonts.nunito(color: Colors.orange));
+      case 'can_add':
+        return ElevatedButton.icon(
+          onPressed: sendFriendRequest,
+          icon: Icon(Icons.person_add, color: Colors.white),
+          label: Text("Добавить в друзья", style: GoogleFonts.nunito(color: Colors.white)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.teal,
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+        );
+      default:
+        return SizedBox.shrink();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF6EE),
-      appBar: AppBar(
-        title: Text("🫂 Мои друзья", style: GoogleFonts.cairo()),
-        backgroundColor: Colors.teal,
-      ),
-      body: Padding(
-        padding: EdgeInsets.all(20),
-        child: Column(
-          children: [
-            TextField(
-              controller: emailController,
-              decoration: InputDecoration(
-                labelText: "Email друга",
-                suffixIcon: IconButton(
-                  icon: Icon(Icons.person_add),
-                  onPressed: _addFriend,
-                ),
+      body: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFFDEBD0), Color(0xFFE8F8F5)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
             ),
-            SizedBox(height: 10),
-            if (statusMessage.isNotEmpty)
-              Text(
-                statusMessage,
-                style: GoogleFonts.nunito(
-                  color: statusMessage.contains("✅") ? Colors.green : Colors.red,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            Divider(height: 40),
-            Expanded(
-              child: friends.isEmpty
-                  ? Center(child: Text("Нет добавленных друзей", style: GoogleFonts.nunito()))
-                  : ListView.builder(
-                itemCount: friends.length,
-                itemBuilder: (context, index) {
-                  final friend = friends[index];
-                  return ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.teal.shade100,
-                      child: Icon(Icons.person, color: Colors.teal[800]),
+          ),
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Иконка Каабы и заголовок
+                  SvgPicture.asset('assets/kaaba.svg', height: 50),
+                  SizedBox(height: 10),
+                  Text(
+                    "Пригласи друзей к Умре 🕋",
+                    style: GoogleFonts.cairo(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.brown[800]),
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    "«Кто указал на благое — тот получит награду подобную награде совершающего это благое» (Хадис)",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.nunito(fontSize: 13, color: Colors.grey[700]),
+                  ),
+                  SizedBox(height: 20),
+
+                  // Поле поиска
+                  TextField(
+                    controller: controller,
+                    decoration: InputDecoration(
+                      hintText: "Email друга",
+                      prefixIcon: Icon(Icons.search, color: Colors.teal),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                     ),
-                    title: Text("@${friend['nickname']}", style: GoogleFonts.nunito(fontWeight: FontWeight.bold)),
-                    subtitle: Text(friend['email']),
-                  );
-                },
+                    onSubmitted: (_) => searchUser(),
+                  ),
+
+                  SizedBox(height: 14),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: searchUser,
+                      child: Text("Найти друга", style: GoogleFonts.nunito(fontSize: 15)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        padding: EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 24),
+
+                  // Загрузка и результат поиска
+                  if (isSearching) CircularProgressIndicator(),
+
+                  if (foundUser != null && !isSearching)
+                    AnimatedContainer(
+                      duration: Duration(milliseconds: 400),
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
+                        border: Border.all(color: Colors.teal.shade100),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("@${foundUser!['nickname']}", style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.bold)),
+                          SizedBox(height: 4),
+                          Text(foundUser!['email'], style: GoogleFonts.nunito(color: Colors.grey[700])),
+                          SizedBox(height: 14),
+                          _statusWidget(),
+                        ],
+                      ),
+                    ),
+                ],
               ),
-            )
-          ],
-        ),
+            ),
+          ),
+
+          // Кнопка возврата назад
+          Positioned(
+            top: 50,
+            right: 10,
+            child: CircleAvatar(
+              radius: 24,
+              backgroundColor: Colors.white,
+              child: IconButton(
+                icon: Icon(Icons.close, color: Colors.black, size: 24,),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
