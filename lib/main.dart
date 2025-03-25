@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:mekka_savings_app/providers/shared_goal_provider.dart';
 
 import 'package:mekka_savings_app/screens/splash_screen.dart';
 
@@ -19,7 +20,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => GoalProvider())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => GoalProvider()),
+        ChangeNotifierProvider(create: (_) => SharedGoalProvider()),
+      ],
       child: MaterialApp(
         title: 'Mekka Savings App',
         locale: Locale('ru'),
