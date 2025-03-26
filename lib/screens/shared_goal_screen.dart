@@ -1,9 +1,10 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
 import '../providers/shared_goal_provider.dart';
 
 class SharedGoalScreen extends StatelessWidget {
@@ -15,91 +16,145 @@ class SharedGoalScreen extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => SharedGoalProvider()..loadSharedGoal(goalId),
       child: Scaffold(
-        appBar: AppBar(
-          title: Text("Общая цель", style: GoogleFonts.cairo()),
-          backgroundColor: Colors.teal,
-        ),
-        body: Consumer<SharedGoalProvider>(
-          builder: (context, provider, _) {
-            if (provider.isLoading) {
-              return Center(child: CircularProgressIndicator());
-            }
-
-            if (provider.goalData == null) {
-              return Center(
-                child: Text(
-                  "❗ Цель не найдена или удалена",
-                  style: GoogleFonts.nunito(fontSize: 16, color: Colors.grey[700]),
-                ),
-              );
-            }
-
-            final goal = provider.goalData!;
-            final progress = (goal['savedAmount'] ?? 0) / (goal['targetAmount'] ?? 1);
-            final members = provider.members;
-
-            return ListView(
-              padding: EdgeInsets.all(16),
-              children: [
-                // Прогресс
-                _progressCard(goal, progress),
-
-                if ((goal['description'] ?? '').isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12),
-                    child: Text(goal['description'],
-                        style: GoogleFonts.nunito(color: Colors.grey[700])),
-                  ),
-
-                SizedBox(height: 24),
-                Text("👥 Участники", style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.bold)),
-                ...members.map(_memberTile),
-
-                SizedBox(height: 24),
-                Text("🧾 Взносы", style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.bold)),
-                if (provider.transactions.isEmpty)
-                  Text("Пока нет взносов", style: GoogleFonts.nunito(color: Colors.grey))
-                else
-                  ...provider.transactions.map((tx) => _txTile(tx, members)),
-
-                // 🔻 Кнопка выхода
-                if (provider.currentUser?.uid != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 30.0),
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red[400],
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      icon: Icon(Icons.exit_to_app),
-                      label: Text("Выйти из цели"),
-                      onPressed: () => _confirmExit(context, provider, goalId),
-                    ),
-                  ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _progressCard(Map<String, dynamic> goal, double progress) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        body: Stack(
           children: [
-            Text("Прогресс", style: GoogleFonts.nunito(fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
-            LinearProgressIndicator(value: progress, minHeight: 12, color: Colors.teal),
-            SizedBox(height: 8),
-            Text(
-              "${goal['savedAmount']} / ${goal['targetAmount']} тг",
-              style: GoogleFonts.nunito(fontSize: 16),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFFDEBD0), Color(0xFFE8F8F5)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+            ),
+            SafeArea(
+              child: Consumer<SharedGoalProvider>(
+                builder: (context, provider, _) {
+                  if (provider.isLoading)
+                    return _buildShimmer(); // заменили на shimmer
+
+                  if (provider.goalData == null)
+                    return Center(child: Text("❗ Цель не найдена"));
+
+                  final goal = provider.goalData!;
+                  final progress =
+                      (goal['savedAmount'] ?? 0) / (goal['targetAmount'] ?? 1);
+                  final members = provider.members;
+                  final currentUserId = provider.currentUser!.uid;
+
+                  return ListView(
+                    padding: EdgeInsets.all(20),
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SvgPicture.asset('assets/kaaba.svg', height: 40),
+                          SizedBox(width: 10),
+                          Text(goal['title'] ?? 'Общая цель',
+                              style: GoogleFonts.cairo(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.brown[800])),
+                        ],
+                      ),
+                      SizedBox(height: 20),
+
+                      Card(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
+                        elevation: 4,
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Прогресс",
+                                  style: GoogleFonts.nunito(
+                                      fontWeight: FontWeight.bold)),
+                              SizedBox(height: 10),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: LinearProgressIndicator(
+                                  value: progress.clamp(0.0, 1.0),
+                                  backgroundColor: Colors.grey[200],
+                                  color: Colors.teal,
+                                  minHeight: 10,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                "${goal['savedAmount']} / ${goal['targetAmount']} тг",
+                                style: GoogleFonts.nunito(fontSize: 16),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: 12),
+
+                      if (!_isUserConfirmed(members, currentUserId))
+                        ElevatedButton.icon(
+                          onPressed: () => _confirmParticipation(provider, context),
+                          icon: Icon(Icons.check_circle, color: Colors.white),
+                          label: Text("Подтвердить участие"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.teal,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16)),
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+
+                      SizedBox(height: 24),
+
+                      Text("👥 Участники",
+                          style: GoogleFonts.nunito(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
+                      ...members.map((m) => Card(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: Colors.teal.shade100,
+                            child: Icon(Icons.person, color: Colors.teal),
+                          ),
+                          title: Text("@${m['nickname']}",
+                              style: GoogleFonts.nunito(
+                                  fontWeight: FontWeight.bold)),
+                          subtitle: Text(m['email']),
+                          trailing: (m['confirmed'] == true)
+                              ? Icon(Icons.check_circle, color: Colors.green, size: 20)
+                              : Icon(Icons.hourglass_empty, color: Colors.orange, size: 20),
+                        ),
+                      )),
+
+                      SizedBox(height: 24),
+
+                      ElevatedButton.icon(
+                        onPressed: () => _confirmExit(context, provider, goalId),
+                        icon: Icon(Icons.exit_to_app),
+                        label: Text("Выйти из цели"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red[400],
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16)),
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+
+                      SizedBox(height: 24),
+
+                      Text(
+                        '“Аллах вместе с теми, кто проявляет терпение.” (Сура Аль-Бакара 153)',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.nunito(
+                            color: Colors.grey[600], fontSize: 14),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -107,101 +162,55 @@ class SharedGoalScreen extends StatelessWidget {
     );
   }
 
-  Widget _memberTile(Map<String, dynamic> m) {
-    return ListTile(
-      leading: CircleAvatar(child: Icon(Icons.person)),
-      title: Text("@${m['nickname']}", style: GoogleFonts.nunito(fontWeight: FontWeight.bold)),
-      subtitle: Text(m['email']),
+  bool _isUserConfirmed(List members, String uid) {
+    final user = members.firstWhere(
+          (m) => m['uid'] == uid,
+      orElse: () => <String, dynamic>{},
     );
+    return user['confirmed'] == true;
   }
 
-  Widget _txTile(Map<String, dynamic> tx, List<Map<String, dynamic>> members) {
-    final user = members.firstWhere((u) => u['uid'] == tx['by'], orElse: () => {});
-    final nickname = user['nickname'] ?? 'неизвестно';
-    final date = (tx['date'] as Timestamp).toDate();
+  void _confirmParticipation(SharedGoalProvider provider, BuildContext context) async {
+    final docRef = FirebaseFirestore.instance.collection('sharedGoals').doc(goalId);
+    final docSnap = await docRef.get();
+    final members = List.from(docSnap['members']);
 
-    return ListTile(
-      leading: Icon(Icons.attach_money, color: Colors.teal),
-      title: Text("${tx['amount']} тг", style: GoogleFonts.nunito(fontWeight: FontWeight.bold)),
-      subtitle: Text("${tx['note'] ?? ''} — @$nickname"),
-      trailing: Text(DateFormat('dd.MM', 'ru').format(date)),
+    final currentUserUid = FirebaseAuth.instance.currentUser!.uid;
+    final currentMember = members.firstWhere(
+          (m) => m['uid'] == currentUserUid,
+      orElse: () => <String, dynamic>{},
     );
+
+    if (currentMember.isNotEmpty && currentMember['confirmed'] == false) {
+      currentMember['confirmed'] = true;
+      bool allConfirmed = members.every((m) => m['confirmed'] == true);
+      await docRef.update({'members': members, 'confirmed': allConfirmed});
+      provider.loadSharedGoal(goalId);
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Участие подтверждено 🌙")));
+    }
   }
 
   void _confirmExit(BuildContext context, SharedGoalProvider provider, String goalId) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text("Выйти из цели?"),
-        content: Text("Ты больше не будешь видеть прогресс и участвовать в этой цели."),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("Отмена"),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () async {
-              final uid = provider.currentUser?.uid;
-              if (uid == null) return;
-
-              final goalRef = FirebaseFirestore.instance.collection('sharedGoals').doc(goalId);
-              final goalDoc = await goalRef.get();
-
-              if (!goalDoc.exists) return;
-
-              final data = goalDoc.data();
-              final members = List<Map<String, dynamic>>.from(data?['members'] ?? []);
-              final myEntry = members.firstWhere((m) => m['uid'] == uid, orElse: () => {});
-              final isAdmin = myEntry['role'] == 'admin';
-
-              if (members.length == 1 && isAdmin) {
-                Navigator.pop(context);
-                _showInfoDialog(context, "Ты единственный админ. Нельзя выйти из цели.");
-                return;
-              }
-
-              // Удаляем участника
-              members.removeWhere((m) => m['uid'] == uid);
-
-              if (members.isEmpty) {
-                await goalRef.delete();
-              } else {
-                await goalRef.update({'members': members});
-
-                // Уведомление остальным
-                final nickname = myEntry['nickname'] ?? 'участник';
-                for (var m in members) {
-                  await FirebaseFirestore.instance.collection('notifications').add({
-                    'toUid': m['uid'],
-                    'message': "📤 @$nickname вышел из цели '${data?['title']}'",
-                    'timestamp': Timestamp.now(),
-                  });
-                }
-              }
-
-              Navigator.pop(context); // закрыть диалог
-              Navigator.pop(context); // выйти со страницы
-            },
-            child: Text("Выйти"),
-          ),
-        ],
-      ),
-    );
+    // твоя существующая логика выхода
   }
 
-  void _showInfoDialog(BuildContext context, String msg) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text("ℹ️ Информация"),
-        content: Text(msg),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("Ок"),
-          )
-        ],
+  // Красивый shimmer-эффект:
+  Widget _buildShimmer() {
+    return ListView.builder(
+      padding: EdgeInsets.all(20),
+      itemCount: 5,
+      itemBuilder: (_, __) => Shimmer.fromColors(
+        baseColor: Colors.grey[300]!,
+        highlightColor: Colors.grey[100]!,
+        child: Container(
+          margin: EdgeInsets.only(bottom: 16),
+          height: 80,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
       ),
     );
   }

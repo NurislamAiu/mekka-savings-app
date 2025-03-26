@@ -26,7 +26,8 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
   Future<void> loadRequests() async {
     setState(() => isLoading = true);
     final doc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
-    final ids = List<String>.from(doc.data()?['friendRequests'] ?? []);
+    final data = doc.data();
+    final ids = List<String>.from(data?['friendRequests'] ?? []);
 
     List<Map<String, dynamic>> result = [];
 
@@ -47,25 +48,42 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
     });
   }
 
-  Future<void> accept(String uid) async {
-    final myRef = FirebaseFirestore.instance.collection('users').doc(user!.uid);
-    final theirRef = FirebaseFirestore.instance.collection('users').doc(uid);
+  Future<void> accept(String senderUid) async {
+    final myUid = user!.uid;
+    final myRef = FirebaseFirestore.instance.collection('users').doc(myUid);
+    final senderRef = FirebaseFirestore.instance.collection('users').doc(senderUid);
 
-    await myRef.update({
-      'friendRequests': FieldValue.arrayRemove([uid]),
-      'friends': FieldValue.arrayUnion([uid]),
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final mySnap = await transaction.get(myRef);
+      final senderSnap = await transaction.get(senderRef);
+
+      List myFriends = List.from(mySnap.data()?['friends'] ?? []);
+      List senderFriends = List.from(senderSnap.data()?['friends'] ?? []);
+      List requests = List.from(mySnap.data()?['friendRequests'] ?? []);
+
+      if (!myFriends.contains(senderUid)) myFriends.add(senderUid);
+      if (!senderFriends.contains(myUid)) senderFriends.add(myUid);
+
+      requests.remove(senderUid);
+
+      transaction.update(myRef, {
+        'friends': myFriends,
+        'friendRequests': requests,
+      });
+
+      transaction.set(senderRef, {
+        'friends': senderFriends,
+      }, SetOptions(merge: true));
     });
-
-    await theirRef.set({
-      'friends': FieldValue.arrayUnion([user!.uid]),
-    }, SetOptions(merge: true));
 
     loadRequests();
   }
 
-  Future<void> decline(String uid) async {
-    await FirebaseFirestore.instance.collection('users').doc(user!.uid).update({
-      'friendRequests': FieldValue.arrayRemove([uid]),
+  Future<void> decline(String senderUid) async {
+    final myRef = FirebaseFirestore.instance.collection('users').doc(user!.uid);
+
+    await myRef.update({
+      'friendRequests': FieldValue.arrayRemove([senderUid]),
     });
 
     loadRequests();
@@ -190,7 +208,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
     );
   }
 
-  // ✨ Шиммер-карточки во время загрузки
+  // ✨ Шиммер-карточки
   Widget _buildShimmer() {
     return Column(
       children: List.generate(3, (_) {

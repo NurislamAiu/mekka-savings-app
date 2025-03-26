@@ -84,10 +84,24 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   Future<void> sendFriendRequest() async {
     final targetId = foundUser!['uid'];
+    final myId = user!.uid;
 
-    await FirebaseFirestore.instance.collection('users').doc(user!.uid).set({
-      'friendRequests': FieldValue.arrayUnion([targetId]),
-    }, SetOptions(merge: true));
+    // Получаем текущие friendRequests друга
+    final doc = await FirebaseFirestore.instance.collection('users').doc(targetId).get();
+    final friendRequests = List<String>.from(doc.data()?['friendRequests'] ?? []);
+    final friends = List<String>.from(doc.data()?['friends'] ?? []);
+
+    if (friendRequests.contains(myId) || friends.contains(myId)) {
+      setState(() {
+        status = 'request_sent';
+      });
+      return;
+    }
+
+    // ✅ Добавляем мой uid в запросы ДРУГУ
+    await FirebaseFirestore.instance.collection('users').doc(targetId).update({
+      'friendRequests': FieldValue.arrayUnion([myId]),
+    });
 
     setState(() {
       status = 'request_sent';
@@ -274,19 +288,53 @@ class _FriendsScreenState extends State<FriendsScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.white,
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => FriendRequestsScreen()),
+      floatingActionButton: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(FirebaseAuth.instance.currentUser!.uid)
+            .snapshots(),
+        builder: (context, snapshot) {
+          bool hasRequests = false;
+
+          if (snapshot.hasData) {
+            final data = snapshot.data!.data() as Map<String, dynamic>?;
+            final requests = data?['friendRequests'] as List<dynamic>? ?? [];
+            hasRequests = requests.isNotEmpty;
+          }
+
+          return Stack(
+            children: [
+              FloatingActionButton(
+                backgroundColor: Colors.white,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => FriendRequestsScreen()),
+                  );
+                },
+                child: Icon(
+                  Icons.notifications_active_outlined,
+                  size: 24,
+                  color: Colors.teal,
+                ),
+              ),
+              if (hasRequests)
+                Positioned(
+                  right: 2,
+                  top: 2,
+                  child: Container(
+                    width: 14,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                  ),
+                ),
+            ],
           );
         },
-        child: Icon(
-          Icons.notifications_active_outlined,
-          size: 24,
-          color: Colors.teal,
-        ),
       ),
     );
   }

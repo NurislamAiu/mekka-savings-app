@@ -1,8 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 class CreateSharedGoalScreen extends StatefulWidget {
   const CreateSharedGoalScreen({super.key});
@@ -14,8 +16,6 @@ class CreateSharedGoalScreen extends StatefulWidget {
 class _CreateSharedGoalScreenState extends State<CreateSharedGoalScreen> {
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
-  final _descController = TextEditingController();
-
   DateTime? _selectedDate;
   List<Map<String, dynamic>> allFriends = [];
   Set<String> selectedUIDs = {};
@@ -50,16 +50,83 @@ class _CreateSharedGoalScreenState extends State<CreateSharedGoalScreen> {
     });
   }
 
+  Future<void> _showCustomCalendar(BuildContext context) async {
+    DateTime? picked = await showModalBottomSheet<DateTime>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        DateTime selectedDay = DateTime.now().add(Duration(days: 30));
+        return Container(
+          padding: EdgeInsets.all(25),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Выбери дедлайн", style: GoogleFonts.cairo(fontSize: 18, fontWeight: FontWeight.bold)),
+                  IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.close, color: Colors.black,))
+                ],
+              ),
+              SizedBox(height: 12),
+              TableCalendar(
+                locale: 'ru_RU',
+                firstDay: DateTime.now(),
+                lastDay: DateTime(2030),
+                focusedDay: selectedDay,
+                calendarFormat: CalendarFormat.month,
+                selectedDayPredicate: (day) => isSameDay(selectedDay, day),
+                calendarStyle: CalendarStyle(
+                  todayDecoration: BoxDecoration(
+                      color: Colors.orange, shape: BoxShape.circle),
+                  selectedDecoration: BoxDecoration(
+                      color: Colors.teal, shape: BoxShape.circle),
+                ),
+                headerStyle: HeaderStyle(
+                  titleCentered: true,
+                  formatButtonVisible: false,
+                  titleTextStyle: GoogleFonts.nunito(
+                      fontWeight: FontWeight.bold, fontSize: 16),
+                  leftChevronIcon:
+                  Icon(Icons.chevron_left, color: Colors.teal),
+                  rightChevronIcon:
+                  Icon(Icons.chevron_right, color: Colors.teal),
+                ),
+                daysOfWeekStyle: DaysOfWeekStyle(
+                  weekdayStyle: GoogleFonts.nunito(fontSize: 12),
+                  weekendStyle:
+                  GoogleFonts.nunito(fontSize: 12, color: Colors.redAccent),
+                ),
+                onDaySelected: (day, _) {
+                  selectedDay = day;
+                  Navigator.pop(context, day);
+                },
+              ),
+              SizedBox(height: 12),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() => _selectedDate = picked);
+    }
+  }
+
   Future<void> _createGoal() async {
     final title = _titleController.text.trim();
     final amount = double.tryParse(_amountController.text.trim()) ?? 0;
-    final description = _descController.text.trim();
 
     if (title.isEmpty || amount <= 0 || _selectedDate == null) return;
 
     final currentUID = user!.uid;
-    final creatorDoc = await FirebaseFirestore.instance.collection('users').doc(currentUID).get();
 
+    final creatorDoc = await FirebaseFirestore.instance.collection('users').doc(currentUID).get();
     final nickname = creatorDoc['nickname'] ?? '';
     final email = creatorDoc['email'] ?? '';
 
@@ -69,6 +136,7 @@ class _CreateSharedGoalScreenState extends State<CreateSharedGoalScreen> {
         'nickname': nickname,
         'email': email,
         'role': 'admin',
+        'confirmed': true,  // 👈 автор сразу подтверждён
       },
       ...allFriends
           .where((f) => selectedUIDs.contains(f['uid']))
@@ -77,110 +145,182 @@ class _CreateSharedGoalScreenState extends State<CreateSharedGoalScreen> {
         'nickname': f['nickname'],
         'email': f['email'],
         'role': 'member',
+        'confirmed': false, // 👈 друзья ещё не подтвердили
       })
     ];
 
+    final memberUIDs = members.map((m) => m['uid']).toList();
+
     await FirebaseFirestore.instance.collection('sharedGoals').add({
       'title': title,
-      'description': description,
       'targetAmount': amount,
-      'savedAmount': 0,
       'deadline': Timestamp.fromDate(_selectedDate!),
+      'savedAmount': 0,
       'createdBy': currentUID,
-      'createdAt': Timestamp.now(),
       'members': members,
+      'memberUIDs': memberUIDs,
+      'confirmed': false, // 👈 вся цель ожидает подтверждения
+      'createdAt': Timestamp.now(),
     });
 
-    Navigator.pop(context);
+    Navigator.pop(context, true);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF6EE),
-      appBar: AppBar(
-        title: Text("🎯 Новая общая цель", style: GoogleFonts.cairo()),
-        backgroundColor: Colors.teal,
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(20),
-        child: Column(
-          children: [
-            TextField(
-              controller: _titleController,
-              decoration: InputDecoration(labelText: "Название цели"),
-            ),
-            TextField(
-              controller: _amountController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: "Сумма (тг)"),
-            ),
-            TextField(
-              controller: _descController,
-              maxLines: 3,
-              decoration: InputDecoration(labelText: "Описание (необязательно)"),
-            ),
-            SizedBox(height: 20),
-            Row(
-              children: [
-                Text(
-                  _selectedDate == null
-                      ? "Выбери дедлайн"
-                      : "⏳ До ${DateFormat('dd MMMM yyyy', 'ru').format(_selectedDate!)}",
-                  style: GoogleFonts.nunito(fontSize: 16),
-                ),
-                Spacer(),
-                TextButton(
-                  onPressed: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now().add(Duration(days: 30)),
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime(2030),
-                    );
-                    if (picked != null) {
-                      setState(() {
-                        _selectedDate = picked;
-                      });
-                    }
-                  },
-                  child: Text("📅 Выбрать"),
-                )
-              ],
-            ),
-            SizedBox(height: 24),
-            Text("👥 Добавь друзей в цель", style: GoogleFonts.nunito(fontWeight: FontWeight.bold)),
-            ...allFriends.map((friend) {
-              final uid = friend['uid'];
-              return CheckboxListTile(
-                value: selectedUIDs.contains(uid),
-                onChanged: (val) {
-                  setState(() {
-                    if (val == true) {
-                      selectedUIDs.add(uid);
-                    } else {
-                      selectedUIDs.remove(uid);
-                    }
-                  });
-                },
-                title: Text("@${friend['nickname']}"),
-                subtitle: Text(friend['email']),
-              );
-            }).toList(),
-            SizedBox(height: 30),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _createGoal,
-                icon: Icon(Icons.check),
-                label: Text("Создать цель"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal,
-                  padding: EdgeInsets.symmetric(vertical: 14),
-                ),
+      body: Stack(
+        children: [
+          // 🌅 Фон (идентичный HomeScreen)
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFFDEBD0), Color(0xFFE8F8F5)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
-            )
-          ],
+            ),
+          ),
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  // 🕋 Заголовок
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SvgPicture.asset('assets/kaaba.svg', height: 40),
+                      SizedBox(width: 10),
+                      Text(
+                        "Общая цель с друзьями",
+                        style: GoogleFonts.cairo(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.brown[800]),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 30),
+
+                  // Название цели
+                  _cardInput("🎯 Название цели", _titleController),
+
+                  SizedBox(height: 16),
+
+                  // Сумма цели
+                  _cardInput("💰 Сумма цели (тг)", _amountController,
+                      keyboardType: TextInputType.number),
+
+                  SizedBox(height: 16),
+
+                  // Дедлайн
+                  Card(
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 3,
+                    child: ListTile(
+                      leading: Icon(Icons.calendar_today, color: Colors.teal),
+                      title: Text(
+                        _selectedDate == null
+                            ? "Выбрать дедлайн"
+                            : DateFormat('dd MMMM yyyy', 'ru').format(_selectedDate!),
+                        style: GoogleFonts.nunito(),
+                      ),
+                      trailing: Icon(Icons.chevron_right, color: Colors.grey),
+                      onTap: () => _showCustomCalendar(context), // 👈 вызов нашего календаря!
+                    ),
+                  ),
+
+                  SizedBox(height: 24),
+
+                  // Друзья
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text("👥 Добавить друзей",
+                        style: GoogleFonts.nunito(fontWeight: FontWeight.bold)),
+                  ),
+                  ...allFriends.map((f) {
+                    return CheckboxListTile(
+                      activeColor: Colors.teal,
+                      value: selectedUIDs.contains(f['uid']),
+                      title: Text("@${f['nickname']}"),
+                      subtitle: Text(f['email']),
+                      onChanged: (val) {
+                        setState(() {
+                          if (val == true)
+                            selectedUIDs.add(f['uid']);
+                          else
+                            selectedUIDs.remove(f['uid']);
+                        });
+                      },
+                    );
+                  }),
+
+                  SizedBox(height: 24),
+
+                  // Кнопка создать
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _createGoal,
+                      icon: Icon(Icons.check_circle_outline, color: Colors.white),
+                      label: Text("Создать общую цель",
+                          style: GoogleFonts.nunito(fontSize: 16, color: Colors.white)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
+                        padding: EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 20),
+
+                  // 📖 Цитата
+                  Text(
+                    '“Аллах помогает Своему рабу, пока тот помогает брату своему.” (Хадис)',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.nunito(color: Colors.grey[600], fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            top: 50,
+            right: 20,
+            child: CircleAvatar(
+              backgroundColor: Colors.white,
+              radius: 24,
+              child: IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: Icon(Icons.close, size: 24),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _cardInput(String hint, TextEditingController controller,
+      {TextInputType keyboardType = TextInputType.text}) {
+    return Card(
+      color: Colors.white,
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16),
+        child: TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          decoration: InputDecoration(
+            border: InputBorder.none,
+            hintText: hint,
+            hintStyle: GoogleFonts.nunito(color: Colors.grey[600]),
+          ),
         ),
       ),
     );
