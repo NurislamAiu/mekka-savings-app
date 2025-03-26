@@ -94,7 +94,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // 🌅 Фон
+          
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -111,7 +111,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
               child: ListView(
                 padding: EdgeInsets.all(20),
                 children: [
-                  // 📖 Хадис дня
+                  
                   Column(
                     children: [
                       SvgPicture.asset('assets/kaaba.svg', height: 40),
@@ -208,7 +208,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
     );
   }
 
-  // ✨ Шиммер-карточки
+  
   Widget _buildShimmer() {
     return Column(
       children: List.generate(3, (_) {

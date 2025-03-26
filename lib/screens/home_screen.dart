@@ -78,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // 🕋 Иконка
+              
               SvgPicture.asset('assets/kaaba.svg', height: 48),
               SizedBox(height: 10),
               Text(
@@ -92,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               SizedBox(height: 24),
 
-              // 💰 Сумма
+              
               _fancyField(
                 controller: amountController,
                 icon: Icons.monetization_on_outlined,
@@ -102,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               SizedBox(height: 14),
 
-              // 📝 Комментарий
+              
               _fancyField(
                 controller: noteController,
                 icon: Icons.edit_note_outlined,
@@ -111,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               SizedBox(height: 30),
 
-              // ✅ Кнопка
+              
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -144,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               SizedBox(height: 20),
 
-              // 📿 Аят
+              
               Text(
                 todayAyah,
                 textAlign: TextAlign.center,
@@ -284,7 +284,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // 🌅 Фон
+          
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -301,7 +301,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 🕋 Заголовок и аят
+                  
                   Row(
                     children: [
                       SvgPicture.asset('assets/kaaba.svg', height: 32),
@@ -332,7 +332,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Text(
                         ayah["arabic"] ?? '',
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, fontFamily: 'Amiri'), // Или NotoNaskhArabic
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, fontFamily: 'Amiri'), 
                       ),
                       SizedBox(height: 8),
                       Text(
@@ -350,7 +350,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   SizedBox(height: 24),
 
-                  // 📊 Прогресс
+                  
                   Card(
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     elevation: 5,
@@ -382,7 +382,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   SizedBox(height: 20),
 
-                  // 📆 План
+                  
                   Text("План накоплений", style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.bold)),
                   SizedBox(height: 10),
                   _planRow("Ежедневно", "${plan['perDay'].toStringAsFixed(0)} тг"),
@@ -413,7 +413,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          // 🎊 Конфетти
+          
           Align(
             alignment: Alignment.topCenter,
             child: ConfettiWidget(
@@ -427,7 +427,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
 
-      // 💚 Кнопка взноса
+      
       floatingActionButton: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
         child: SizedBox(

@@ -136,7 +136,7 @@ class _CreateSharedGoalScreenState extends State<CreateSharedGoalScreen> {
         'nickname': nickname,
         'email': email,
         'role': 'admin',
-        'confirmed': true,  // 👈 автор сразу подтверждён
+        'confirmed': true,  
       },
       ...allFriends
           .where((f) => selectedUIDs.contains(f['uid']))
@@ -145,7 +145,7 @@ class _CreateSharedGoalScreenState extends State<CreateSharedGoalScreen> {
         'nickname': f['nickname'],
         'email': f['email'],
         'role': 'member',
-        'confirmed': false, // 👈 друзья ещё не подтвердили
+        'confirmed': false, 
       })
     ];
 
@@ -159,7 +159,7 @@ class _CreateSharedGoalScreenState extends State<CreateSharedGoalScreen> {
       'createdBy': currentUID,
       'members': members,
       'memberUIDs': memberUIDs,
-      'confirmed': false, // 👈 вся цель ожидает подтверждения
+      'confirmed': false, 
       'createdAt': Timestamp.now(),
     });
 
@@ -171,7 +171,7 @@ class _CreateSharedGoalScreenState extends State<CreateSharedGoalScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // 🌅 Фон (идентичный HomeScreen)
+          
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -186,7 +186,7 @@ class _CreateSharedGoalScreenState extends State<CreateSharedGoalScreen> {
               padding: EdgeInsets.all(20),
               child: Column(
                 children: [
-                  // 🕋 Заголовок
+                  
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -203,18 +203,18 @@ class _CreateSharedGoalScreenState extends State<CreateSharedGoalScreen> {
                   ),
                   SizedBox(height: 30),
 
-                  // Название цели
+                  
                   _cardInput("🎯 Название цели", _titleController),
 
                   SizedBox(height: 16),
 
-                  // Сумма цели
+                  
                   _cardInput("💰 Сумма цели (тг)", _amountController,
                       keyboardType: TextInputType.number),
 
                   SizedBox(height: 16),
 
-                  // Дедлайн
+                  
                   Card(
                     color: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -228,13 +228,13 @@ class _CreateSharedGoalScreenState extends State<CreateSharedGoalScreen> {
                         style: GoogleFonts.nunito(),
                       ),
                       trailing: Icon(Icons.chevron_right, color: Colors.grey),
-                      onTap: () => _showCustomCalendar(context), // 👈 вызов нашего календаря!
+                      onTap: () => _showCustomCalendar(context), 
                     ),
                   ),
 
                   SizedBox(height: 24),
 
-                  // Друзья
+                  
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text("👥 Добавить друзей",
@@ -259,7 +259,7 @@ class _CreateSharedGoalScreenState extends State<CreateSharedGoalScreen> {
 
                   SizedBox(height: 24),
 
-                  // Кнопка создать
+                  
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
@@ -278,7 +278,7 @@ class _CreateSharedGoalScreenState extends State<CreateSharedGoalScreen> {
 
                   SizedBox(height: 20),
 
-                  // 📖 Цитата
+                  
                   Text(
                     '“Аллах помогает Своему рабу, пока тот помогает брату своему.” (Хадис)',
                     textAlign: TextAlign.center,

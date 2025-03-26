@@ -82,7 +82,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // 📖 Аят дня
+                          
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -120,7 +120,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                           SizedBox(height: 20),
 
-                          // 🕋 Аватар
+                          
                           CircleAvatar(
                             radius: 50,
                             backgroundColor: Colors.white,
@@ -149,7 +149,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           SizedBox(height: 20),
 
-                          // 📊 Статистика
+                          
                           Card(
                             color: Colors.white,
                             shape: RoundedRectangleBorder(
@@ -175,7 +175,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                           SizedBox(height: 20),
 
-                          // 🧭 Меню
+                          
                           Row(
                             children: [
                               _menuButton(

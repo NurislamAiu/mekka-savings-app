@@ -24,11 +24,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       duration: Duration(seconds: 2),
     )..repeat();
 
-    // Проверка авторизации через 2.5 сек
+    
     Future.delayed(Duration(milliseconds: 2500), () async {
       setState(() => _visible = false);
 
-      await Future.delayed(Duration(milliseconds: 600)); // fade-out
+      await Future.delayed(Duration(milliseconds: 600)); 
       final user = FirebaseAuth.instance.currentUser;
 
       Navigator.of(context).pushReplacement(

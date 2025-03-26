@@ -51,7 +51,7 @@ class _AuthScreenState extends State<AuthScreen> {
           password: password,
         );
 
-        // ⬇️ Сохраняем в Firestore
+        
         await FirebaseFirestore.instance.collection('users').doc(cred.user!.uid).set({
           'email': email,
           'nickname': nickname,
@@ -76,7 +76,7 @@ class _AuthScreenState extends State<AuthScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // 🌅 Фон
+          
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(

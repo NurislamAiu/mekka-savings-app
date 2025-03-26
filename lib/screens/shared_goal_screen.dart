@@ -31,7 +31,7 @@ class SharedGoalScreen extends StatelessWidget {
               child: Consumer<SharedGoalProvider>(
                 builder: (context, provider, _) {
                   if (provider.isLoading)
-                    return _buildShimmer(); // заменили на shimmer
+                    return _buildShimmer(); 
 
                   if (provider.goalData == null)
                     return Center(child: Text("❗ Цель не найдена"));
@@ -192,10 +192,10 @@ class SharedGoalScreen extends StatelessWidget {
   }
 
   void _confirmExit(BuildContext context, SharedGoalProvider provider, String goalId) {
-    // твоя существующая логика выхода
+    
   }
 
-  // Красивый shimmer-эффект:
+  
   Widget _buildShimmer() {
     return ListView.builder(
       padding: EdgeInsets.all(20),

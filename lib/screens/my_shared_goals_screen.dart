@@ -119,7 +119,7 @@ class _MySharedGoalsScreenState extends State<MySharedGoalsScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // 🌅 Красивый фон
+          
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -273,8 +273,8 @@ class _MySharedGoalsScreenState extends State<MySharedGoalsScreen> {
           );
 
           if (result == true) {
-            _loadSharedGoals(); // Автообновление списка целей
-            _showSuccessAnimation(); // Анимация успеха 🌟
+            _loadSharedGoals(); 
+            _showSuccessAnimation(); 
           }
         },
         child: Icon(Icons.notes, size: 24, color: Colors.teal),

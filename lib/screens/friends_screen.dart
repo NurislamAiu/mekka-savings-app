@@ -86,7 +86,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final targetId = foundUser!['uid'];
     final myId = user!.uid;
 
-    // Получаем текущие friendRequests друга
+    
     final doc = await FirebaseFirestore.instance.collection('users').doc(targetId).get();
     final friendRequests = List<String>.from(doc.data()?['friendRequests'] ?? []);
     final friends = List<String>.from(doc.data()?['friends'] ?? []);
@@ -98,7 +98,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
       return;
     }
 
-    // ✅ Добавляем мой uid в запросы ДРУГУ
+    
     await FirebaseFirestore.instance.collection('users').doc(targetId).update({
       'friendRequests': FieldValue.arrayUnion([myId]),
     });
@@ -175,7 +175,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Иконка Каабы и заголовок
+                  
                   SvgPicture.asset('assets/kaaba.svg', height: 50),
                   SizedBox(height: 10),
                   Text(
@@ -197,7 +197,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   ),
                   SizedBox(height: 20),
 
-                  // Поле поиска
+                  
                   TextField(
                     controller: controller,
                     decoration: InputDecoration(
@@ -233,7 +233,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
                   SizedBox(height: 24),
 
-                  // Загрузка и результат поиска
+                  
                   if (isSearching) CircularProgressIndicator(),
 
                   if (foundUser != null && !isSearching)
@@ -273,7 +273,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
             ),
           ),
 
-          // Кнопка возврата назад
+          
           Positioned(
             top: 50,
             right: 20,
