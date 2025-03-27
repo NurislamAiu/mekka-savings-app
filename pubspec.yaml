@@ -47,6 +47,25 @@ dependencies:
   flutter_svg: ^2.0.17
   google_fonts: ^6.2.1
   shimmer: ^3.0.0
+  flutter_native_splash: ^2.4.5
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  image_path: "assets/kaaba.png"
+  ios: true
+
+flutter_native_splash:
+  color: "#FDF6EE"
+  image: assets/dorba.png
+  android: true
+  ios: true
+
+  android_12:
+    image: assets/dorba_12.png
+    icon_background_color: "#FDF6EE"
+
+
+
 
 dev_dependencies:
   flutter_test:
@@ -73,6 +92,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/kaaba.svg
+    - assets/kaaba.png
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
