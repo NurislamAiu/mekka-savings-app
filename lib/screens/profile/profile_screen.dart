@@ -3,14 +3,14 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:mekka_savings_app/screens/settings_screen.dart';
+import 'package:mekka_savings_app/screens/profile/settings_screen.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../data/daily_ayahs.dart';
-import 'friends_screen.dart';
-import 'my_friends_screen.dart';
-import 'my_shared_goals_screen.dart';
-import 'create_shared_goal_screen.dart';
+import '../../data/daily_ayahs.dart';
+import '../friends/friends_screen.dart';
+import '../friends/my_friends_screen.dart';
+import '../goals/my_shared_goals_screen.dart';
+import '../goals/create_shared_goal_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

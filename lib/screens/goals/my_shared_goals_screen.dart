@@ -3,8 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mekka_savings_app/screens/create_shared_goal_screen.dart';
-import 'package:mekka_savings_app/screens/shared_goal_screen.dart';
+import 'package:mekka_savings_app/screens/goals/create_shared_goal_screen.dart';
+import 'package:mekka_savings_app/screens/goals/shared_goal_screen.dart';
 import 'package:shimmer/shimmer.dart';
 
 class MySharedGoalsScreen extends StatefulWidget {

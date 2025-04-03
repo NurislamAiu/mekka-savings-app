@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
-import '../providers/shared_goal_provider.dart';
+import '../../providers/shared_goal_provider.dart';
 
 class SharedGoalScreen extends StatelessWidget {
   final String goalId;

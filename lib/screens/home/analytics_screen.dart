@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-import '../models/goal_model.dart';
+import '../../models/goal_model.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   final String userId;

@@ -4,13 +4,13 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:mekka_savings_app/models/goal_model.dart';
-import 'package:mekka_savings_app/screens/profile_screen.dart';
+import 'package:mekka_savings_app/screens/profile/profile_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../data/daily_ayahs.dart';
-import '../providers/goal_provider.dart';
-import '../utils/goal_helper.dart';
+import '../../data/daily_ayahs.dart';
+import '../../providers/goal_provider.dart';
+import '../../core/goal_helper.dart';
 
 class HomeScreen extends StatefulWidget {
   final String userId;
