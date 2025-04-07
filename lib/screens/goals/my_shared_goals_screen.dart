@@ -7,6 +7,8 @@ import 'package:mekka_savings_app/screens/goals/create_shared_goal_screen.dart';
 import 'package:mekka_savings_app/screens/goals/shared_goal_screen.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../widgets/close_screen_button.dart';
+
 class MySharedGoalsScreen extends StatefulWidget {
   const MySharedGoalsScreen({super.key});
 
@@ -262,6 +264,7 @@ class _MySharedGoalsScreenState extends State<MySharedGoalsScreen> {
               ),
             ),
           ),
+          CloseScreenButton(),
         ],
       ),
       floatingActionButton: FloatingActionButton(

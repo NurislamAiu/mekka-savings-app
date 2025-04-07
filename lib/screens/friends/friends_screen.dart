@@ -5,6 +5,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mekka_savings_app/screens/friends/friend_requests_screen.dart';
 
+import '../../widgets/close_screen_button.dart';
+
 class FriendsScreen extends StatefulWidget {
   const FriendsScreen({super.key});
 
@@ -273,19 +275,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
             ),
           ),
 
-          
-          Positioned(
-            top: 50,
-            right: 20,
-            child: CircleAvatar(
-              radius: 24,
-              backgroundColor: Colors.white,
-              child: IconButton(
-                icon: Icon(Icons.close, color: Colors.black, size: 24),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ),
-          ),
+
+          CloseScreenButton(),
         ],
       ),
       floatingActionButton: StreamBuilder<DocumentSnapshot>(

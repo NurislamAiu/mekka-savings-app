@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../providers/shared_goal_provider.dart';
+import '../../widgets/close_screen_button.dart';
 
 class SharedGoalScreen extends StatelessWidget {
   final String goalId;
@@ -156,6 +157,7 @@ class SharedGoalScreen extends StatelessWidget {
                 },
               ),
             ),
+            CloseScreenButton(),
           ],
         ),
       ),

@@ -5,6 +5,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../widgets/close_screen_button.dart';
+
 class FriendRequestsScreen extends StatefulWidget {
   const FriendRequestsScreen({super.key});
 
@@ -150,18 +152,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
             ),
           ),
 
-          Positioned(
-            top: 50,
-            right: 20,
-            child: CircleAvatar(
-              backgroundColor: Colors.white,
-              radius: 22,
-              child: IconButton(
-                icon: Icon(Icons.close),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ),
-          ),
+          CloseScreenButton(),
         ],
       ),
     );

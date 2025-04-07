@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../../widgets/close_screen_button.dart';
 import '../../widgets/settings_tile_widget.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -150,18 +151,7 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
 
-          Positioned(
-            top: 50,
-            right: 20,
-            child: CircleAvatar(
-              radius: 24,
-              backgroundColor: Colors.white,
-              child: IconButton(
-                icon: const Icon(Icons.close, size: 24, color: Colors.black),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ),
-          ),
+          CloseScreenButton(),
         ],
       ),
     );

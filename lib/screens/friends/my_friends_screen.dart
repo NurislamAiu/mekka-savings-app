@@ -6,6 +6,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mekka_savings_app/screens/friends/friends_screen.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../widgets/close_screen_button.dart';
+
 class MyFriendsScreen extends StatefulWidget {
   const MyFriendsScreen({super.key});
 
@@ -182,18 +184,7 @@ class _MyFriendsScreenState extends State<MyFriendsScreen> {
               ],
             ),
           ),
-          Positioned(
-            top: 50,
-            right: 20,
-            child: CircleAvatar(
-              backgroundColor: Colors.white,
-              radius: 24,
-              child: IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: Icon(Icons.close, size: 24),
-              ),
-            ),
-          ),
+          CloseScreenButton(),
         ],
       ),
       floatingActionButton: FloatingActionButton(

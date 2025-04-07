@@ -6,6 +6,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import '../../widgets/close_screen_button.dart';
+
 class CreateSharedGoalScreen extends StatefulWidget {
   const CreateSharedGoalScreen({super.key});
 
@@ -288,18 +290,7 @@ class _CreateSharedGoalScreenState extends State<CreateSharedGoalScreen> {
               ),
             ),
           ),
-          Positioned(
-            top: 50,
-            right: 20,
-            child: CircleAvatar(
-              backgroundColor: Colors.white,
-              radius: 24,
-              child: IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: Icon(Icons.close, size: 24),
-              ),
-            ),
-          ),
+          CloseScreenButton(),
         ],
       ),
     );
