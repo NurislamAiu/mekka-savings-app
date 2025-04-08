@@ -87,7 +87,6 @@ class App extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-        title: 'Mekka Savings App',
         locale: const Locale('ru'),
         debugShowCheckedModeBanner: false,
         supportedLocales: const [Locale('ru'), Locale('en')],
