@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../friends/my_friends_screen.dart';
+import '../../friends/friend_my/my_friends_screen.dart';
 import '../../goals/my_shared_goals/my_shared_goals_screen.dart';
 
 class ProfileMenuButtons extends StatelessWidget {
