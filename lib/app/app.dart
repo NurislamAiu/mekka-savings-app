@@ -5,6 +5,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:mekka_savings_app/screens/friends/friend_add/data/friends_repository_impl.dart';
 import 'package:mekka_savings_app/screens/friends/friend_add/domain/usecases/search_user_usecase.dart';
 import 'package:mekka_savings_app/screens/friends/friend_add/domain/usecases/send_friend_request_usecase.dart';
+import 'package:mekka_savings_app/screens/friends/friend_my/domain/repositories/my_friends_repository.dart';
+import 'package:mekka_savings_app/screens/friends/friend_my/domain/usecases/get_my_friends_usecase.dart';
+import 'package:mekka_savings_app/screens/friends/friend_my/presentation/my_friends_provider.dart';
 import 'package:mekka_savings_app/screens/goals/my_shared_goals/domain/my_shared_goal_use_case.dart';
 import 'package:mekka_savings_app/screens/goals/my_shared_goals/presentation/my_shared_goals_provider.dart';
 import 'package:mekka_savings_app/screens/goals/shared_goal/presentation/shared_goal_provider.dart';
@@ -15,6 +18,7 @@ import 'package:provider/provider.dart';
 
 import '../screens/auth/auth_screen.dart';
 import '../screens/friends/friend_add/presentation/friends_provider.dart';
+import '../screens/friends/friend_my/data/repositories/my_friends_repository_impl.dart';
 import '../screens/friends/friend_requests/data/friend_repository.dart';
 import '../screens/friends/friend_requests/domian/friend_request_use_case.dart';
 import '../screens/friends/friend_requests/presentation/friend_requests_provider.dart';
@@ -61,6 +65,13 @@ class App extends StatelessWidget {
                 searchUserUseCase: SearchUserUseCase(FriendsRepositoryImpl()),
                 sendRequestUseCase: SendFriendRequestUseCase(FriendsRepositoryImpl()),
               ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) {
+            return MyFriendsProvider(
+              getMyFriendsUseCase: GetMyFriendsUseCase(MyFriendsRepositoryImpl()),
+            );
+          },
         ),
 
         ChangeNotifierProvider(
