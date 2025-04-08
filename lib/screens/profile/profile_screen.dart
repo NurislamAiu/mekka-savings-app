@@ -1,14 +1,15 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:mekka_savings_app/screens/profile/presentation/profile_provider.dart';
+import 'package:mekka_savings_app/screens/profile/settings_screen.dart';
+import 'package:mekka_savings_app/screens/profile/widgets/profile_header.dart';
+import 'package:mekka_savings_app/screens/profile/widgets/profile_menu_buttons.dart';
+import 'package:mekka_savings_app/screens/profile/widgets/profile_shimmer.dart';
+import 'package:mekka_savings_app/screens/profile/widgets/profile_stats_card.dart';
+import 'package:provider/provider.dart';
 
 import '../../data/daily_ayahs.dart';
 import '../../widgets/close_screen_button.dart';
-import '../profile/widgets/profile_header.dart';
-import '../profile/widgets/profile_stats_card.dart';
-import '../profile/widgets/profile_menu_buttons.dart';
-import '../profile/widgets/profile_shimmer.dart';
-import '../profile/settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -18,47 +19,27 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final user = FirebaseAuth.instance.currentUser;
-  String? nickname, bio;
-  int transactionsCount = 0;
-  double totalSaved = 0;
-  bool isLoading = true;
   final ayah = dailyAyahs[DateTime.now().day % dailyAyahs.length];
 
   @override
   void initState() {
     super.initState();
-    _loadProfile();
-  }
-
-  Future<void> _loadProfile() async {
-    final userDoc =
-    await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
-    final goalDoc =
-    await FirebaseFirestore.instance.collection('goals').doc('mekkaTrip').get();
-    final txSnapshot = await goalDoc.reference
-        .collection('transactions')
-        .where('userId', isEqualTo: user!.uid)
-        .get();
-
-    setState(() {
-      nickname = userDoc.data()?['nickname'] ?? '';
-      bio = userDoc.data()?['bio'] ?? 'Коплю на Умру 🕋';
-      totalSaved = (goalDoc.data()?['savedAmount'] ?? 0).toDouble();
-      transactionsCount = txSnapshot.docs.length;
-      isLoading = false;
-    });
+    Future.microtask(() =>
+        context.read<ProfileProvider>().loadProfile(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<ProfileProvider>();
+
     return Scaffold(
-      body: isLoading
+      body: provider.isLoading
           ? const ShimmerContent()
           : Stack(
         children: [
           Container(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [Color(0xFFFDEBD0), Color(0xFFE8F8F5)],
                 begin: Alignment.topCenter,
@@ -71,16 +52,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  ProfileHeader(ayah: ayah, nickname: nickname!, email: user?.email ?? '', bio: bio!),
+                  ProfileHeader(
+                    ayah: ayah,
+                    nickname: provider.nickname!,
+                    email: FirebaseAuth.instance.currentUser?.email ?? '',
+                    bio: provider.bio!,
+                  ),
                   const SizedBox(height: 20),
-                  ProfileStatsCard(totalSaved: totalSaved, transactionsCount: transactionsCount),
+                  ProfileStatsCard(
+                    totalSaved: provider.totalSaved,
+                    transactionsCount: provider.transactionsCount,
+                  ),
                   const SizedBox(height: 20),
                   const ProfileMenuButtons(),
                 ],
               ),
             ),
           ),
-          CloseScreenButton(),
+          const CloseScreenButton(),
         ],
       ),
       floatingActionButton: FloatingActionButton(

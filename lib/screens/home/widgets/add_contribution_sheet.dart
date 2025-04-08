@@ -3,8 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:confetti/confetti.dart';
-
-import '../../../../providers/goal_provider.dart';
+import '../presentation/goal_provider.dart';
 import 'fancy_input_field.dart';
 
 void showAddContributionSheet(BuildContext context, ConfettiController confettiController) {

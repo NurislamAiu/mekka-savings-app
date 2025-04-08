@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../models/goal_model.dart';
-import '../../../../providers/goal_provider.dart';
+import '../presentation/goal_provider.dart';
 
 class GoalProgressCard extends StatelessWidget {
   final bool isLoading;

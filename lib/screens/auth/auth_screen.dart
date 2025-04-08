@@ -62,8 +62,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => HomeScreen(userId: cred.user!.uid)),
-      );
+        MaterialPageRoute(builder: (_) => HomeScreen()));
     } catch (e) {
       setState(() => errorMessage = "Ошибка: ${e.toString()}");
     } finally {
