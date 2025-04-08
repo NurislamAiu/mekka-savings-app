@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:mekka_savings_app/screens/friends/friends_screen.dart';
+import 'package:mekka_savings_app/screens/friends/friend_add/friends_screen.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../widgets/close_screen_button.dart';
